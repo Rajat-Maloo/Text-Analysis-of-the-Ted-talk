@@ -1,0 +1,306 @@
+---
+title: "MA331-Coursework"
+author: "2112111-Rajat-Maloo"
+subtitle: Text analytics of the TED talks by Gever Tulley and Greg Gage
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+### Don't delete this setup code chunk from your file
+knitr::opts_chunk$set(echo = FALSE)
+knitr::opts_chunk$set(message = FALSE,comment = NA)
+## DON'T ALTER THIS: this is to prevent printing the code in your "html" file.
+
+# Extend the list below to load all the packages required for your analyses here:
+#===============================================================================
+# load the 'dsEssex' package
+library(dsEssex)
+# load the tidyverse and tidytext packages
+library(tidyverse)
+library(tidytext)
+# load the 'ggrepel' package
+library(ggrepel)
+# load the 'ted_talks' data
+#=========================
+data(ted_talks)
+#Filtering data into two speakers which are assigned 
+MyData <- ted_talks %>%
+  filter(speaker %in% c("Greg Gage", "Gever Tulley"))
+
+
+
+
+```
+
+
+## Introduction
+<br>
+In this report, We will analyze and compare the **word count** and **sentiment** of two TED speakers. For this report, I am using the Data Set of ted_talks which is present inside dsEssex package. For this analysis the two speakers are **Greg Gage** and **Gever Tulley**. <br>
+
+Greg Gage is a Neuroscientist and co-founder of Backyard Brains. In April 2017, In one of his TED talks, he talk about how plants use electrical signals to convey information and plant-to-plant communication. He also shows how plants translate information between plants.<br>
+In one of his TED talks in March 2015, he also talks about the importance of learning Neuroscience. Tools to study neuroscience are so complicated and costly that most universities are not able to buy them. He also predicted that 20 percent of the world population will have a neurological disorder. So he and his lab mate decided to build a simple and cheap tool so anyone can learn about Neuroscience in their school and university. In this TED talk, he also gave demonstrated his equipment. He shows us how to control someone else arm with our brain.
+<br>
+Gever Tulley is a Computer scientist and also the founder of Tinkering School. In his school, there is no fixed curriculum and they do not follow any schedule and do not have any assessment. He believes that children have more ability than they know. Learning happens through projects and practical implementation of thoughts.<br>
+In one of his TED talks in March 2007, he talks about a summer program that is organized by his school. This program helps kids to acquire knowledge of constructing new things that come to their minds. He mostly talks about child's imaginations and creative problem-solving techniques. There is a total of four TED talks in the dataset. Each speaker has two talks.<br>
+
+
+## Methods
+
+
+In this project, we have to compare word frequencies and sentiment analysis.<br>
+
+For comparing word frequencies we are using the below steps 
+
+**Step 1** <br>
+First, we will import libraries and load our data set(ted_talks) and filter our two speakers(Greg Gage, Gever Tulley).<br>
+**Step 2**<br>
+After filtering the data we want to count which words occur most frequently so we have to convert our text data(transcript) into words. To do this, we use tidytext's **unnest_tokens()** function. <br>
+Now that the data is in one-word-per-row format, we can handle it with tidy tools like dplyr. In-text analysis, we wanted to remove stop words. Stop words are words that are not useful for analysis. We can remove stop words by using **stop_words()** function with an **anti_join()** function.
+<br>
+**Step 3** <br>
+After converting the transcript into words and removing stopwords we have to count the word frequency of each speaker. Here we use **count()** and **slice_max()** to find top ten words of each speakers.To Visualize word frequency count we plot a bar graph using the ggplot package.
+<br>
+Also, we want to know what are the most common words of both speakers. For a better understanding of common words used by speakers, we are using the **geom_text_repel()** function. 
+
+<br>
+**Sentiment Analysis**<br>
+There are many types of sentiment lexicons but in this project, we are using only two types of *bing* lexicons which gives categorizes words in a binary form(positive and negative), and *NRC* lexicons which link with eight basic emotions (anger, fear, anticipation, trust, surprise, sadness, joy, and disgust) and two sentiments (negative and positive). To use particular sentiment lexicons we are using **get_sentiments()** function. It is done with the **inner_join** function <br>
+
+With the help of bing lexicons, I am able to compare who talks more positive words between two speakers, and also I came to know how many positive and negative words each speaker used in their talks.
+<br>
+Using NRC lexicons we come to know what are the different type of emotions each speaker use in their talks.
+
+## Results
+
+
+```{r,warning=FALSE,message=FALSE,comment=FALSE}
+#Using unnest_tokens() function to  tokenising MyData text  in single words.
+
+MyData1 <-MyData %>%
+  unnest_tokens(word, text)%>%
+  #Using anti_join() to remove the stop words.Stop words are the words which are not usefull for a text analysis
+  anti_join(stop_words)
+
+
+#Identification of top words for Gever Tulley 
+top_words_Gever <- MyData1 %>%
+  filter(speaker=="Gever Tulley")%>%
+  #using count() function to number of words given by Gever Tulley and also sorting the words with the most frequently use.
+  count(speaker,word, sort = TRUE) %>%
+  # Using slice_max() function to select top 10 words.
+  slice_max(n, n = 10) %>%
+  # rearranging words in descending order
+  mutate(word = reorder(word, n)) %>%
+  ggplot(aes(n,word,fill="red"),main = "Gever Tulley") +
+  #using ggplot2's geom_col() with n on the x-axis and word on the y-axis to show frequencies of the top 10 words
+  geom_col(alpha = 0.8, show.legend = FALSE,position="stack") +
+  #giving title to our plot
+  ggtitle("Top words by Gever Tulley")
+
+#Identification of top words for Greg Gage
+top_words_Greg <- MyData1 %>%
+  #Using filter() function to plot only Greg Gage words  
+  filter(speaker=="Greg Gage")%>%
+   #using count() function to number of words given by Greg Gage and also sorting the words with the most frequently use.
+  count(word, sort = TRUE) %>%
+  slice_max(n, n = 10) %>%
+ # Using mutate() to rearranging words in descending order.
+  mutate(word = reorder(word, n)) %>%
+  #using ggplot2's geom_col() with n on the x-axis and word on the y-axis to show frequencies of the top 10 words
+  ggplot(aes(n,word,fill="red")) +
+  geom_col(alpha = 0.8, show.legend = FALSE,position="stack") +
+  #giving title to our plot
+  ggtitle("Top words by Greg Gage")
+
+
+
+```
+
+In the below figure, we are anticipating what are the most common words used by each speaker.
+
+```{r, figures-side, fig.show="hold", out.width="50%",comment=" ", prompt=TRUE}
+
+#Comparing speaker words using visualisation
+par(mfrow=c(1,2))# Create a 1 x 2 plotting matrix
+top_words_Gever 
+top_words_Greg 
+```
+
+From the above bar graph, we see that In **Gever Tulley** talks he use kids, children, learn, and school frequently whereas In **Greg Gage** talk he often use words like the brain, action, potential, and many more. <br>
+
+
+In the below plot, we show what are the common words between Greg Gage and Gever Tulley.
+
+```{r,warning=FALSE,comment="",message=FALSE}
+#Comparing speaker words using visualisation
+MyData1 %>%
+  count(speaker, word) %>%
+  group_by(word) %>%
+  slice_max(n, n = 15) %>%
+  ungroup() %>%
+  # Using pivot_wider function to increasing the number of columns by including speaker names on column and decreasing the number of rows by removing speaker name form rows. 
+  pivot_wider(names_from = "speaker", values_from = "n", values_fill = 0) %>%
+  #Ploting words of Greg Gage on X axis and Gever Tulley words on y axis.
+  ggplot(aes(`Greg Gage`, `Gever Tulley`)) +
+  # ploating a diagonal line with slope =1
+  geom_abline(color = "#fa1e1e", size = 1.2, alpha = 0.8, lty = 2) +
+  # using geom_text_repel from the package ggrepel to plot words
+  geom_text_repel(aes(label = word))
+
+```
+
+
+
+
+**Sentiment Analysis between two speakers** <br>
+In the below plot, we compare positive and negative words by each speaker (Left diagram). we also compare positive and negative words *between* each speaker (Right diagram).
+
+
+```{r}
+
+view_by_speaker <-MyData1 %>%
+  #doing sentiment analysis using bing lexicons.
+  inner_join(get_sentiments("bing"))%>%
+  # finding word fequency of each words
+  count(headline,speaker,sentiment) %>%
+   #ploting number of sentiment in which x is type of sentiment and y is number of words
+  ggplot(aes(sentiment,n,fill=speaker)) +
+  # make a bar chart with geom_col()
+  geom_col() +
+  # make small multiples for each title with facet_wrap()
+  facet_wrap(~ speaker)
+
+view_by_sentiment <-MyData1 %>%
+  #doing sentiment analysis using bing lexicons.
+  inner_join(get_sentiments("bing"))%>%
+  #Counting number of words in each sentiment.
+  count(headline,speaker,sentiment) %>%
+  #ploting number of sentiment in which x is type of speaker and y is number of sentiment 
+  ggplot(aes(speaker,n,fill=sentiment)) +
+  # make a bar chart with geom_col()
+  geom_col() +
+  # make small multiples for sentiment title with facet_wrap()
+  facet_wrap(~ sentiment)
+
+
+```
+
+
+
+
+```{r, fig.show="hold", out.width="50%",message=FALSE,eval=TRUE}
+par(mfrow=c(1,2)) # Create a 1 x 2 plotting matrix
+view_by_speaker
+view_by_sentiment
+
+
+```
+
+
+From the above bar charts, we can say that Greg Gage use positive sentiment and negative sentiment words nearly the same number of times but Gever Tulley use more negative sentiment words as compared to positive words.<br>
+Also, we analyze that Gever Tulley uses more negative sentiment words than Greg Gage. In the above plots, we use the bing lexicon.<br>
+
+
+
+```{r}
+
+
+bing_Gever <- MyData1 %>%
+  filter(speaker=="Gever Tulley")%>%
+  #doing sentiment analysis using bing lexicons.
+  inner_join(get_sentiments("bing"))%>%
+  count(word, sentiment, sort = TRUE) %>%
+  #Grouping each word by sentiment
+  group_by(sentiment) %>%
+  # filtering number of words whose count is nore than one 
+  filter(n>1)%>%
+  ungroup() %>%
+  #Rearranging the words by descending order
+  mutate(word = reorder(word, n)) %>%
+  #ploting bar garh where x axis is word count and y axis is words
+  ggplot(aes(n, word, fill = sentiment)) +
+  # using geom_col() to plot bar graph
+  geom_col(show.legend = FALSE) +
+  # make small multiples for each sentiment with facet_wrap()
+  facet_wrap(~sentiment, scales = "free_y") +
+  #labeling x axis
+  labs(x = "Count")+
+  #giving title to graph.
+  ggtitle("Poitive and negative sentiments by Gever Tulley")
+
+bing_Greg <- MyData1 %>%
+  filter(speaker=="Greg Gage")%>%
+  #doing sentiment analysis using bing lexicons.
+  inner_join(get_sentiments("bing"))%>%
+  count(word, sentiment, sort = TRUE) %>%
+  group_by(sentiment) %>%
+  filter(n>1)%>%
+  ungroup() %>%
+  mutate(word = reorder(word, n)) %>%
+  ggplot(aes(n, word, fill = sentiment)) +
+  geom_col(show.legend = FALSE) +
+  facet_wrap(~sentiment, scales = "free_y") +
+  labs(x = "Count")+
+  ggtitle("Poitive and negative sentiments by Greg Gage")
+
+
+
+```
+
+
+
+
+```{r, fig.show="hold", out.width="50%"}
+
+par(mfrow=c(1,2)) # Create a 1 x 2 plotting matrix
+bing_Gever
+bing_Greg 
+
+
+```
+
+From the above sentiment analysis we can say that commonly use negative words by Gever are *dangerous, hurt, terrible* and positive words are *sharp, trusted, success*. Whereas most negative words used by Gerg are *complex, fall, trap* and positive words are *perfect, ready, fast*.
+<br>
+
+
+
+```{r,message=FALSE}
+  #doing sentiment analysis using NRC lexicons.In NRC we get the different type of emotions which we plot from this code.
+nrc_analysis <- MyData1 %>%
+ #doing sentiment analysis using NRC lexicons.
+  inner_join(get_sentiments("nrc")) %>%
+  count(speaker, sentiment, sort = TRUE)
+
+nrc_analysis %>%
+  #Reordering the sentiments by descending order
+  mutate(sentiment = reorder(sentiment, n)) %>%
+  #ploting bar garh where x axis is number of words each sentiment have and y axis is sentiments.
+  ggplot(aes(n, sentiment)) +
+  geom_col(fill="#f2461b") +
+  facet_wrap(~speaker, scales = "free_y") +
+  #Labeling x axis 
+  labs(x = "Contribution to sentiment")
+
+
+
+```
+
+From the above chart, we can say that both the speakers have used a lot of positive words throughout their talk. We can see that count of positive words for Greg is more which is obvious as the total word count for him is more.<br>
+We can observe that *anticipation*, *trust*, *joy* are present in both the talks.<br>
+We can see that the *fear*, *anger* and *sadness* sentiment is high for Gever.<br>
+From the above plot, we can conclude that positive sentiments are high in Greg's talk.
+
+
+## Discussion
+
+As both the speakers come from different backgrounds Gerg is a neuroscientist and Gever is a computer scientist and teacher. Both of them are working on different domains and have a different set of audiences. Gever would be addressed to parents of school-going kids and talks of Greg is mostly viewed by students at high school or university. So there are very less common words used by both the speakers and it's difficult to determine the common words used are referring to the same context.<br>
+Though if we look on a broad level both are trying to modify or evolve something in the education field. Both of them are working on some equipment or doing some experiments. Greg is trying to optimize the equipment related to Neuroscience so that they can be easily available and cost-friendly. Whereas Gever is helping kids to design things for fun and utility and he wants kids to think out of the box and then discover and design.<br>
+**Challanges and Limitations** <br>
+Data sets have very less things in common so it's a bit difficult to draw the conclusion for sentiments.<br>
+Word counts and number of talks are less to determine more about sentiments and personality of speakers
+<br>
+**Improvements**<br>
+The common things which I mentioned above are noted by the observations after watching the videos. If we use some libraries which look at synonyms of words and group them under a section, for example, words like students, university, learning can be related to education.
+We can also determine the speed by which the presenter is talking like slow, medium, or fast by calculating the number of words per minute so that a recommendation for play speed like 0.75x or 1.25x can be recommended.
