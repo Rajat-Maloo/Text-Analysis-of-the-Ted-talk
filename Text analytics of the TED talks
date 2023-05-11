@@ -1,8 +1,4 @@
 ---
-title: "MA331-Coursework"
-author: "2112111-Rajat-Maloo"
-subtitle: Text analytics of the TED talks by Gever Tulley and Greg Gage
-output:
   html_document: default
   pdf_document: default
 ---
